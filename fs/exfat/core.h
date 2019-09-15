@@ -15,8 +15,8 @@
  *  along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef _SDFAT_CORE_H
-#define _SDFAT_CORE_H
+#ifndef _EXFAT_CORE_H
+#define _EXFAT_CORE_H
 
 #include <asm/byteorder.h>
 
@@ -119,7 +119,7 @@ void get_uniname_from_dos_entry(struct super_block *sb, DOS_DENTRY_T *ep, UNI_NA
 /* file operation functions */
 s32 walk_fat_chain(struct super_block *sb, CHAIN_T *p_dir, u32 byte_offset, u32 *clu);
 
-/* sdfat/cache.c */
+/* exfat/cache.c */
 s32  meta_cache_init(struct super_block *sb);
 s32  meta_cache_shutdown(struct super_block *sb);
 u8 *fcache_getblk(struct super_block *sb, u64 sec);
@@ -143,11 +143,6 @@ s32 fat_ent_get(struct super_block *sb, u32 loc, u32 *content);
 s32 fat_ent_set(struct super_block *sb, u32 loc, u32 content);
 s32 fat_ent_get_safe(struct super_block *sb, u32 loc, u32 *content);
 
-/* core_fat.c : core code for fat */
-s32 fat_generate_dos_name_new(struct super_block *sb, CHAIN_T *p_dir, DOS_NAME_T *p_dosname, s32 n_entries);
-s32  mount_fat16(struct super_block *sb, pbr_t *p_pbr);
-s32  mount_fat32(struct super_block *sb, pbr_t *p_pbr);
-
 /* core_exfat.c : core code for exfat */
 
 s32 load_alloc_bmp(struct super_block *sb);
@@ -159,26 +154,6 @@ s32 update_dir_chksum(struct super_block *sb, CHAIN_T *p_dir, s32 entry);
 s32 update_dir_chksum_with_entry_set(struct super_block *sb, ENTRY_SET_CACHE_T *es);
 bool is_dir_empty(struct super_block *sb, CHAIN_T *p_dir);
 s32  mount_exfat(struct super_block *sb, pbr_t *p_pbr);
-
-/* amap_smart.c :  creation on mount / destroy on umount */
-int amap_create(struct super_block *sb, u32 pack_ratio, u32 sect_per_au, u32 hidden_sect);
-void amap_destroy(struct super_block *sb);
-
-/* amap_smart.c : (de)allocation functions */
-s32 amap_fat_alloc_cluster(struct super_block *sb, u32 num_alloc, CHAIN_T *p_chain, s32 dest);
-s32 amap_free_cluster(struct super_block *sb, CHAIN_T *p_chain, s32 do_relse);/* Not impelmented */
-s32 amap_release_cluster(struct super_block *sb, u32 clu); /* Only update AMAP */
-
-/* amap_smart.c : misc (for defrag) */
-s32 amap_mark_ignore(struct super_block *sb, u32 clu);
-s32 amap_unmark_ignore(struct super_block *sb, u32 clu);
-s32 amap_unmark_ignore_all(struct super_block *sb);
-s32 amap_check_working(struct super_block *sb, u32 clu);
-s32 amap_get_freeclus(struct super_block *sb, u32 clu);
-
-/* amap_smart.c : stat AU */
-u32 amap_get_au_stat(struct super_block *sb, s32 mode);
-
 
 /* blkdev.c */
 s32 bdev_open_dev(struct super_block *sb);
@@ -216,6 +191,6 @@ void	set_sb_dirty(struct super_block *sb);
 }
 #endif /* __cplusplus */
 
-#endif /* _SDFAT_CORE_H */
+#endif /* _EXFAT_CORE_H */
 
 /* end of core.h */

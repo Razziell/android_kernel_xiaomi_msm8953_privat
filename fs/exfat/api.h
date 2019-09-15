@@ -15,11 +15,11 @@
  *  along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef _SDFAT_API_H
-#define _SDFAT_API_H
+#ifndef _EXFAT_API_H
+#define _EXFAT_API_H
 
 #include "config.h"
-#include "sdfat_fs.h"
+#include "exfat_fs.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -67,10 +67,10 @@ extern "C" {
 #define TYPE_ALL                0x0FFF
 
 /* eio values */
-#define SDFAT_EIO_NONE		(0x00000000)
-#define SDFAT_EIO_READ		(0x00000001)
-#define SDFAT_EIO_WRITE		(0x00000002)
-#define SDFAT_EIO_BDI		(0x00000004)
+#define EXFAT_EIO_NONE		(0x00000000)
+#define EXFAT_EIO_READ		(0x00000001)
+#define EXFAT_EIO_WRITE		(0x00000002)
+#define EXFAT_EIO_BDI		(0x00000004)
 
 /* modes for volume allocation unit status */
 #define VOL_AU_STAT_TOTAL	(0)
@@ -129,7 +129,6 @@ typedef struct {
 } DEV_INFO_T;
 
 typedef struct {
-	u32      FatType;
 	u32      ClusterSize;
 	u32      NumClusters;
 	u32      FreeClusters;
@@ -251,7 +250,6 @@ typedef struct {
 
 typedef struct __FS_INFO_T {
 	s32	 bd_opened;              // opened or not
-	u32      vol_type;               // volume FAT type
 	u32      vol_id;                 // volume serial number
 	u64      num_sectors;            // num of sectors in volume
 	u32      num_clusters;           // num of clusters in volume
@@ -303,98 +301,10 @@ typedef struct __FS_INFO_T {
 	} dcache;
 } FS_INFO_T;
 
-/*======================================================================*/
-/*                                                                      */
-/*                     API FUNCTION DECLARATIONS                        */
-/*                  (CHANGE THIS PART IF REQUIRED)                      */
-/*                                                                      */
-/*======================================================================*/
-
-/*----------------------------------------------------------------------*/
-/*  External Function Declarations                                      */
-/*----------------------------------------------------------------------*/
-
-/* file system initialization & shutdown functions */
-s32 fsapi_init(void);
-s32 fsapi_shutdown(void);
-
-/* volume management functions */
-s32 fsapi_mount(struct super_block *sb);
-s32 fsapi_umount(struct super_block *sb);
-s32 fsapi_statfs(struct super_block *sb, VOL_INFO_T *info);
-s32 fsapi_sync_fs(struct super_block *sb, s32 do_sync);
-s32 fsapi_set_vol_flags(struct super_block *sb, u16 new_flag, s32 always_sync);
-
-/* file management functions */
-s32 fsapi_lookup(struct inode *inode, u8 *path, FILE_ID_T *fid);
-s32 fsapi_create(struct inode *inode, u8 *path, u8 mode, FILE_ID_T *fid);
-s32 fsapi_read_link(struct inode *inode, FILE_ID_T *fid, void *buffer, u64 count, u64 *rcount);
-s32 fsapi_write_link(struct inode *inode, FILE_ID_T *fid, void *buffer, u64 count, u64 *wcount);
-s32 fsapi_remove(struct inode *inode, FILE_ID_T *fid); /* unlink and truncate */
-s32 fsapi_truncate(struct inode *inode, u64 old_size, u64 new_size);
-s32 fsapi_rename(struct inode *old_parent_inode, FILE_ID_T *fid,
-		struct inode *new_parent_inode, struct dentry *new_dentry);
-s32 fsapi_unlink(struct inode *inode, FILE_ID_T *fid);
-s32 fsapi_read_inode(struct inode *inode, DIR_ENTRY_T *info);
-s32 fsapi_write_inode(struct inode *inode, DIR_ENTRY_T *info, int sync);
-s32 fsapi_map_clus(struct inode *inode, u32 clu_offset, u32 *clu, int dest);
-s32 fsapi_reserve_clus(struct inode *inode);
-
-/* directory management functions */
-s32 fsapi_mkdir(struct inode *inode, u8 *path, FILE_ID_T *fid);
-s32 fsapi_readdir(struct inode *inode, DIR_ENTRY_T *dir_entry);
-s32 fsapi_rmdir(struct inode *inode, FILE_ID_T *fid);
-
-/* FAT & buf cache functions */
-s32 fsapi_cache_flush(struct super_block *sb, int do_sync);
-s32 fsapi_cache_release(struct super_block *sb);
-
-/* extra info functions */
-u32 fsapi_get_au_stat(struct super_block *sb, s32 mode);
-
-/* extent cache functions */
-void fsapi_invalidate_extent(struct inode *inode);
-
-/* bdev management */
-s32 fsapi_check_bdi_valid(struct super_block *sb);
-
-#ifdef CONFIG_SDFAT_DFR
-/*----------------------------------------------------------------------*/
-/*  Defragmentation related                                             */
-/*----------------------------------------------------------------------*/
-
-s32 fsapi_dfr_get_info(struct super_block *sb, void *arg);
-
-s32 fsapi_dfr_scan_dir(struct super_block *sb, void *args);
-
-s32 fsapi_dfr_validate_clus(struct inode *inode, void *chunk, int skip_prev);
-s32 fsapi_dfr_reserve_clus(struct super_block *sb, s32 nr_clus);
-s32 fsapi_dfr_mark_ignore(struct super_block *sb, unsigned int clus);
-void fsapi_dfr_unmark_ignore_all(struct super_block *sb);
-
-s32 fsapi_dfr_map_clus(struct inode *inode, u32 clu_offset, u32 *clu);
-void fsapi_dfr_writepage_endio(struct page *page);
-
-void fsapi_dfr_update_fat_prev(struct super_block *sb, int force);
-void fsapi_dfr_update_fat_next(struct super_block *sb);
-void fsapi_dfr_check_discard(struct super_block *sb);
-void fsapi_dfr_free_clus(struct super_block *sb, u32 clus);
-
-s32 fsapi_dfr_check_dfr_required(struct super_block *sb, int *totalau, int *cleanau, int *fullau);
-s32 fsapi_dfr_check_dfr_on(struct inode *inode, loff_t start, loff_t end, s32 cancel, const char *caller);
-
-
-#ifdef CONFIG_SDFAT_DFR_DEBUG
-void fsapi_dfr_spo_test(struct super_block *sb, int flag, const char *caller);
-#endif	/* CONFIG_SDFAT_DFR_DEBUG */
-
-#endif	/* CONFIG_SDFAT_DFR */
-
-
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */
 
-#endif /* _SDFAT_API_H */
+#endif /* _EXFAT_API_H */
 
 /* end of api.h */
